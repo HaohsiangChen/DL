@@ -23,7 +23,7 @@ def _main():
         }
 
         producer = kafka_client.KafkaProducer(
-            bootstrap_servers='localhost:9092',
+            bootstrap_servers='master:6667',
             value_serializer=lambda m: json.dumps(m).encode('utf8'))
 
         producer.send(topic, payload)

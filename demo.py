@@ -47,8 +47,8 @@ def process_frame():
     writeVideo_flag = False 
     
     #video_capture = cv2.VideoCapture(0)
-    producer = KafkaProducer(bootstrap_servers='localhost:9092',value_serializer=lambda m: json.dumps(m).encode('utf8'))
-    consumer = KafkaConsumer('test', bootstrap_servers=['localhost:9092'])
+    producer = KafkaProducer(bootstrap_servers='master:6667',value_serializer=lambda m: json.dumps(m).encode('utf8'))
+    consumer = KafkaConsumer('test', bootstrap_servers=['master:6667'])
     for msg in consumer:
         json_from_consumer = json.loads(msg[-6])
 

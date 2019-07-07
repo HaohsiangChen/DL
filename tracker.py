@@ -38,13 +38,14 @@ def process_frame(dataset):
     nn_budget = None
     nms_max_overlap = 1.0
     producer = KafkaProducer(bootstrap_servers='master:6667',value_serializer=lambda m: json.dumps(m).encode('utf8'))
+
+    data = dataset.collect()
+
    # deep_sort 
     model_filename = 'model_data/mars-small128.pb'
     encoder = gdet.create_box_encoder(model_filename,batch_size=1)
-    
     metric = nn_matching.NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
     tracker = Tracker(metric)
-    data = dataset.collect()
     dt_now = dt.datetime.now()
     for datum in data:
         event = json.loads(datum[1])
@@ -96,6 +97,7 @@ def process_frame(dataset):
             bbox = det.to_tlbr()
             cv2.rectangle(frame,(int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),(255,0,0), 2)
 
+        #sent result to kafka
         if len(boxs) > 0:
             print(str(track.track_id) + ' :' + str(bbox[0]) + ' ' + str(bbox[1]) + ' ' + str(bbox[2]) + ' ' + str(
                 bbox[3]))
@@ -106,22 +108,9 @@ def process_frame(dataset):
                 'location_x': str(bbox[0]),
                 'w': str(bbox[2])
             }
-            producer.send('resultstream', result)
+            producer.send('position', result)
             producer.flush()
 
-        # if writeVideo_flag:
-            ##save a frame
-            # out.write(frame)
-            # frame_index = frame_index + 1
-            # list_file.write(str(frame_index)+' ')
-            # if len(boxs) != 0:
-                # for i in range(0,len(boxs)):
-                    # list_file.write(str(boxs[i][0]) + ' '+str(boxs[i][1]) + ' '+str(boxs[i][2]) + ' '+str(boxs[i][3]) + ' ')
-            # list_file.write('\n')
-        # fps = 0.0
-        # fps  = ( fps + (1./(time.time()-t1)) ) / 2
-        # print("fps= %f"%(fps))
-        
         # Press Q to stop!
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

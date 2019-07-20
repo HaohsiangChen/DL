@@ -1,38 +1,31 @@
-import base64
+from kafka import KafkaProducer
 import cv2
+import base64
 import json
 import time
-import numpy as np
-import kafka as kafka_client
 import datetime as dt
+import logging
+from camera import VideoCamera
+from flask import Flask, render_template, Response
 
-def _main():
-    video_capture = cv2.VideoCapture(0)
-    topic = 'test'
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+def gen(camera):
     while True:
-        ret, frame = video_capture.read()  # frame shape 640*480*3
-        if ret != True:
-           break
-        t1 = time.time()
-        s, buffer = cv2.imencode('.jpg', frame)
-        jpg_as_text = base64.b64encode(buffer).decode('utf-8')
+        frame,raw_frame = camera.get_frame()
+        camera.stream_video(raw_frame)
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
 
-        payload = {
-            'image': jpg_as_text,
-            'timestamp': dt.datetime.now().isoformat()
-        }
-
-        producer = kafka_client.KafkaProducer(
-            bootstrap_servers='master:6667',
-            value_serializer=lambda m: json.dumps(m).encode('utf8'))
-
-        producer.send(topic, payload)
-        fps = 0.0    
-        fps  = ( fps + (1./(time.time()-t1)) ) / 2
-        print("fps= %f"%(fps))
-def main():
-    _main()
-
+@app.route('/video_feed')
+def video_feed():
+    return Response(gen(VideoCamera()),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
-    main()
+    app.run(host='0.0.0.0', debug=True)

@@ -22,7 +22,6 @@
 
 	python producer.py
 	python spark-submit --jars spark-streaming-kafka-0-8-assembly_2.11-2.3.3.jar tracker.py
-	python consumer.py
 
 
 	

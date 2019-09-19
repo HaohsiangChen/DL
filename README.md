@@ -9,7 +9,7 @@
 	The following dependencies are needed to run the tracker:
 
 	NumPy
-	sklean
+	sklearn
 	OpenCV
 	Pillow
 	TensorFlow
